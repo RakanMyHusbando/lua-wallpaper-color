@@ -167,10 +167,9 @@ function Color:_hsvToRgb()
     }
 end
 
---- Quantize a color value to a given number of levels.
 --- @param N number: The number of levels to quantize to.
 --- @param ... number: The color values to quantize.
---- @return table: The quantized color values.
+--- @return table
 function Color:_quantize(N, ...)
     local result = {}
     for _, v in ipairs({ ... }) do
