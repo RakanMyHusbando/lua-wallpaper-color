@@ -39,7 +39,3 @@ The project is still under construction and not yet functional. Documentation an
 ## Inspiration
 
 - [pywal](https://github.com/dylanaraps/pywal) by dylanaraps
-
-## License
-
-MIT License
