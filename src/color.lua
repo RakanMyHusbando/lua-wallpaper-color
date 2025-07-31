@@ -148,7 +148,12 @@ function Color:_hsvToRgb()
     local h, s, v = self.hsv[1], self.hsv[2], self.hsv[3]
     local c, x, m, r, g, b
     if s <= 0 then
-        return { math.floor(v * 255), math.floor(v * 255), math.floor(v * 255) }
+        self.rgb = {
+            math.floor(v * 255),
+            math.floor(v * 255),
+            math.floor(v * 255)
+        }
+        return
     end
     h, c = h % 360, v * s
     x, m = c * (1 - math.abs((h / 60) % 2 - 1)), v - c
@@ -165,7 +170,7 @@ function Color:_hsvToRgb()
     else
         r, g, b = c, 0, x
     end
-    self.hsv = {
+    self.rgb = {
         math.floor((r + m) * 255 + 0.5),
         math.floor((g + m) * 255 + 0.5),
         math.floor((b + m) * 255 + 0.5)
