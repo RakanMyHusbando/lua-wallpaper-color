@@ -6,7 +6,7 @@ A small project written in Lua using the [LOVE2D](https://love2d.org/) framework
 
 ## Features
 
-- [ ] Extract main colors from a wallpaper  
+- [x] Extract colors from a wallpaper  
 - [ ] Automatically generate a color scheme  
 - [ ] (Planned) Apply the generated scheme to other programs
 
