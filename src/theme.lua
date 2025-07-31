@@ -1,12 +1,7 @@
-local class = require("src.class")
-local Color = require("src.color")
--- Import COLOR_FORMAT_ENUM from main.lua if it's defined globally
-local COLOR_FORMAT_ENUM = _G.COLOR_FORMAT_ENUM or {
-    HEX = "HEX",
-    RGB = "RGB",
-    HSV = "HSV",
-}
-
+---@class Theme
+---@field foreground Color
+---@field background Color
+---@field color [Color[],Color[]]
 --[[
 Creates a color theme from a list of colors and a map of color hex value as key
 and a number as value to determine occurrence of a color.
@@ -39,11 +34,7 @@ local countByHex = {
 local theme = Theme(colors, countByHex, targetColorCount, selectFromLength)
 ```
 ]]
----@class Theme
----@field foreground Color
----@field background Color
----@field color [Color[],Color[]]
-local Theme = class()
+local Theme = Class()
 
 ---@param colorList Color[]
 ---@param countByHex table<string, number>
