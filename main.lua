@@ -61,12 +61,11 @@ function love.load()
 
     local theme = Theme(colorList, colorHexCount, targetColorCount, selectFromLength)
 
-    print("{\n\tforeground: #" .. theme.foreground.hex)
-    print("\tbackground: #" .. theme.background.hex)
+    print("\n{\n\tforeground: #" .. theme.foreground.hex .. ";\n\tbackground: #" .. theme.background.hex .. ";")
     for i = 1, 2 do
         for j, color in ipairs(theme.color[i]) do
-            print("\tcolor" .. ((i - 1) * 8 + j) .. ": #" .. color.hex)
+            print("\tcolor" .. ((i - 1) * 8 + j) .. ": #" .. color.hex .. ";")
         end
     end
-    print("}")
+    print("}\n")
 end
