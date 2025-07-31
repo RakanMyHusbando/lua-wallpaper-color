@@ -1,5 +1,8 @@
-local class = require "src.class"
-
+---@class Color
+---@field color? number | string
+---@field hex string
+---@field rgb [number, number, number]
+---@field hsv [number, number, number]
 --[[
 When the class is created, each of the other color format is generated from the input color format.
 
@@ -29,12 +32,7 @@ local hex = "ffffff"
 local color = Color(format, hex)
 ```
 ]]
----@class Color
----@field color? number | string
----@field hex string
----@field rgb [number, number, number]
----@field hsv [number, number, number]
-local Color = class()
+local Color = Class()
 
 --- Initialize a color object from a given format and value.
 ---@param format string: Use a property of COLOR_FORMAT_ENUM.
@@ -102,6 +100,15 @@ function Color:getHSVDistance(diffrentHsv)
     local ds = math.abs(self.hsv[2] - s)
     local dv = math.abs(self.hsv[3] - v)
     return math.sqrt(dh * dh + ds * ds * 100 + dv * dv * 100)
+end
+
+--- Returns the RGB values of the color in the normal range (0-1) by dividing each component by 255.
+---@return number, number, number
+function Color:getRgbNormalized()
+    if not self.rgb[1] or not self.rgb[2] or not self.rgb[3] then
+        return 0, 0, 0
+    end
+    return self.rgb[1] / 255, self.rgb[2] / 255, self.rgb[3] / 255
 end
 
 --- Converts RGB color values to HEX color values.
