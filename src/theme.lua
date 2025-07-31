@@ -1,4 +1,11 @@
 local class = require("src.class")
+local Color = require("src.color")
+-- Import COLOR_FORMAT_ENUM from main.lua if it's defined globally
+local COLOR_FORMAT_ENUM = _G.COLOR_FORMAT_ENUM or {
+    HEX = "HEX",
+    RGB = "RGB",
+    HSV = "HSV",
+}
 
 --[[
 Creates a color theme from a list of colors and a map of color hex value as key
@@ -43,24 +50,43 @@ local Theme = class()
 ---@param targetColorCount number
 ---@param selectFromLength number
 function Theme:init(colorList, countByHex, targetColorCount, selectFromLength)
-    self.targetColorCount = targetColorCount
-    self.color, self.selectColorList, self.selectCountByHex = { {}, {} }, {}, {}
-    print(colorList)
-    print(countByHex)
-    print(targetColorCount)
-    print(selectedFromLength)
-    table.sort(colorList,function(a, b)
-        return countByHex[a.hex] > countByHex[b.hex]
-    end)
-    for i = 1, selectFromLength do
-        if not colorList[i] then break end
-        self.selectColorList[i] = colorList[i]
-        self.selectCountByHex[colorList[i].hex] = countByHex[colorList[i][i].hex]
+    if not colorList or #colorList == 0 then
+        error("colorList must be a non-empty table")
     end
-    table.sort(self.selectColorList, function(a, b) return a.hsv[3] < b.hsv[3] end)
-    self.foreground = self.selectColorList[1]
-    self.background = self.selectColorList[#self.selectColorList]
-    self:_createColor()
+    if not countByHex then
+        error("countByHex must be provided")
+    end
+
+    self.targetColorCount = targetColorCount or 8
+    self.color, self.selectColorList, self.selectCountByHex = { {}, {} }, {}, {}
+
+    -- Make sure colorList elements have hex property
+    for i, color in ipairs(colorList) do
+        if not color.hex then
+            error("Color at index " .. i .. " is missing 'hex' property")
+        end
+    end
+
+    -- Sort by frequency
+    table.sort(colorList, function(a, b)
+        return (countByHex[a.hex] or 0) > (countByHex[b.hex] or 0)
+    end)
+
+    -- Copy to selectColorList
+    for i = 1, math.min(selectFromLength or 50, #colorList) do
+        if not colorList[i] then break end
+        self.selectCountByHex[colorList[i].hex] = countByHex[colorList[i].hex] or 1
+        table.insert(self.selectColorList, colorList[i])
+    end
+
+    if #self.selectColorList > 0 then
+        table.sort(self.selectColorList, function(a, b) return a.hsv[3] < b.hsv[3] end)
+        self.foreground = self.selectColorList[1]
+        self.background = self.selectColorList[#self.selectColorList]
+        self:_createColor()
+    else
+        print("Warning: No colors selected for theme")
+    end
 end
 
 function Theme:_colorFillMissing()
@@ -71,11 +97,10 @@ function Theme:_createColor()
     table.sort(self.selectColorList, function(a, b)
         return self.selectCountByHex[a.hex] > self.selectCountByHex[b.hex]
     end)
-    while #self.selectColorList < self.targetColorCount
-        and #self.selectColorList < #self.selectColorList do
+    while #self.color[1] < self.targetColorCount do
         self:_findHighestContrastColor()
     end
-    if self.targetColorCount > #self.color then self:_colorFillMissing() end
+    if self.targetColorCount > #self.color[1] then self:_colorFillMissing() end
     self:_lightenOrDarkenPair()
 end
 
@@ -99,7 +124,7 @@ end
 function Theme:_findHighestContrastColor()
     local bestColor, bestContrast = nil, 0
     for _, candidate in ipairs(self.selectColorList) do
-        if not self.selectCountByHex[candidate.hex] then
+        if self.selectCountByHex[candidate.hex] then
             local candidateMinDistance = self:_minDistance(candidate, 50)
             if candidateMinDistance > bestContrast then
                 bestContrast = candidateMinDistance
@@ -108,8 +133,7 @@ function Theme:_findHighestContrastColor()
         end
     end
     if not bestColor then return end
-    table.insert(self.selectColorList, bestColor)
-    self.selectCountByHex[bestColor.hex] = true
+    table.insert(self.color[1], bestColor)
 end
 
 ---@param colors Color[]
@@ -128,22 +152,22 @@ end
 ---@param rgbAverage number
 function Theme:_lightenOrDarkenRgb(rgb, rgbAverage, index)
     local result = {}
-    for i, el in ipairs(rgb) do
+    for _, el in ipairs(rgb) do
         if rgbAverage > (255 / 2) then
-            table.insert(result, (el < (255 / 10) and 0 or el < (255 / 10)))
+            table.insert(result, (el < (255 / 10) and 0 or el - (255 / 10)))
         else
             table.insert(result, (el + (255 / 10) > 255 and 255 or el + (255 / 10)))
         end
     end
-    self.color[2][index] = Color(COLOR_FORMAT_ENUM.RGB, result) or self.color[1][index]
+    self.color[2][index] = Color(COLOR_FORMAT_ENUM.RGB, result)
 end
 
 function Theme:_lightenOrDarkenPair()
-    table.sort(self.selectColorList, function(a, b) return a.hsv[3] < b.hsv[3] end)
-    local average = self:_rgbCalcAverage(self.selectColorList)
-    for i = 1, 8 do
-        self:_lightenOrDarkenRgb(self.selectColorList[i].rgb, average, i)
-        self.color[1][i] = self.selectColorList[i] or Color(COLOR_FORMAT_ENUM.RGB, { 0, 0, 0 })
+    if #self.color[1] == 0 then return end
+    table.sort(self.color[1], function(a, b) return a.hsv[3] < b.hsv[3] end)
+    local average = self:_rgbCalcAverage(self.color[1])
+    for i = 1, math.min(8, #self.selectColorList) do
+        if self.color[1][i] then self:_lightenOrDarkenRgb(self.selectColorList[i].rgb, average, i) end
     end
 end
 

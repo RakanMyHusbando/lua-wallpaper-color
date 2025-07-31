@@ -52,9 +52,7 @@ function Color:init(format, value)
 end
 
 function Color:_handleRgb(value)
-    self.rgb = (value[1] > 255 or value[2] > 255 or value[3] > 255)
-        and self:_quantize(16, value[1], value[2], value[3])
-        or value
+    self.rgb = value
     self:_rgbToHex()
     self:_rgbToHsv()
 end
@@ -88,7 +86,7 @@ function Color:getContrastRatio(diffrentRgb)
         local c = { self.rgb[i] / 255, diffrentRgb[i] / 255 }
         for j = 1, 2 do
             luminance[j] = luminance[j] + factor *
-                (c[j] <= 0.03928 and c[j] / 12.92 or math.pow((c1 + 0.055) / 1.055, 2.4))
+                (c[j] <= 0.03928 and c[j] / 12.92 or math.pow((c[j] + 0.055) / 1.055, 2.4))
         end
     end
     table.sort(luminance, function(a, b) return a < b end)
@@ -126,7 +124,7 @@ function Color:_rgbToHsv()
     elseif max == b then
         h = (r - g) / delta + 4
     end
-    return { h * 60, s, v / 255 }
+    self.hsv = { h * 60, s, v / 255 }
 end
 
 --- Converts HEX color values to RGB color values.
@@ -165,17 +163,6 @@ function Color:_hsvToRgb()
         math.floor((g + m) * 255 + 0.5),
         math.floor((b + m) * 255 + 0.5)
     }
-end
-
---- @param N number: The number of levels to quantize to.
---- @param ... number: The color values to quantize.
---- @return table
-function Color:_quantize(N, ...)
-    local result = {}
-    for _, v in ipairs({ ... }) do
-        table.insert(result, math.floor(v * (N - 1)) / (N - 1))
-    end
-    return result
 end
 
 return Color
