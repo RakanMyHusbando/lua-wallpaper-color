@@ -9,7 +9,7 @@ COLOR_FORMAT_ENUM = {
     HSV = "HSV",
 }
 
-local file = "assets/1.jpg"
+local file = "assets/4.jpg"
 local scaleFactor = 0.1      -- reduces the image size to 10% of the original
 local targetColorCount = 8   -- Number of colors to target in the theme
 local selectFromLength = 100 -- Number with the most frequent colors to select from when creating the theme
