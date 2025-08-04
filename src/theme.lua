@@ -88,9 +88,7 @@ function Theme:_createColor()
     table.sort(self.selectColorList, function(a, b)
         return self.selectCountByHex[a.hex] > self.selectCountByHex[b.hex]
     end)
-    while #self.color[1] < self.targetColorCount do
-        self:_findHighestContrastColor()
-    end
+    self:_findHighestContrastColor()
     if self.targetColorCount > #self.color[1] then self:_colorFillMissing() end
     self:_lightenOrDarkenPair()
 end
@@ -125,6 +123,9 @@ function Theme:_findHighestContrastColor()
     end
     if not bestColor then return end
     table.insert(self.color[1], bestColor)
+    if #self.color[1] < self.targetColorCount then
+        self:_findHighestContrastColor()
+    end
 end
 
 ---@param colors Color[]
