@@ -49,26 +49,20 @@ function Theme:init(colorList, countByHex, targetColorCount, selectFromLength)
     end
 
     self.targetColorCount = targetColorCount or 8
-    self.color, self.selectColorList, self.selectCountByHex = { {}, {} }, {}, {}
-
-    -- Make sure colorList elements have hex property
-    for i, color in ipairs(colorList) do
-        if not color.hex then
-            error("Color at index " .. i .. " is missing 'hex' property")
-        end
-    end
+    self.color = { {}, {} }
 
     -- Sort by frequency
     table.sort(colorList, function(a, b)
         return (countByHex[a.hex] or 0) > (countByHex[b.hex] or 0)
     end)
 
-    -- Copy to selectColorList
-    for i = 1, math.min(selectFromLength or 50, #colorList) do
-        if not colorList[i] then break end
-        self.selectCountByHex[colorList[i].hex] = countByHex[colorList[i].hex] or 1
-        table.insert(self.selectColorList, colorList[i])
+    -- Copy to self.selectColorList and self.selectCountByHex
+    self:_fillColorPool(colorList, countByHex, selectFromLength or 50)
+    if not self.selectColorList or not self.selectCountByHex then
+        error("Failed to fill color pool: selectColorList or selectCountByHex is missing")
     end
+
+    self:_filterBySaturateAndValue()
 
     if #self.selectColorList > 0 then
         table.sort(self.selectColorList, function(a, b) return a.hsv[3] < b.hsv[3] end)
@@ -80,14 +74,34 @@ function Theme:init(colorList, countByHex, targetColorCount, selectFromLength)
     end
 end
 
+function Theme:_filterBySaturateAndValue()
+    print("filter by staturate and value (hsv[2] and hsv[3])")
+    -- TODO: create weight to filter colorList
+end
+
 function Theme:_colorFillMissing()
+    print("fill missing color")
     -- TODO: create new colors if missing
 end
 
+---@param colorList Color[]
+---@param countByHex table<string, number>
+---@param maxLength number
+function Theme:_fillColorPool(colorList, countByHex, maxLength)
+    self.selectColorList, self.selectCountByHex = {}, {}
+    local i = 1
+    while #self.selectColorList < math.min(maxLength, #colorList) and
+        i <= math.min(maxLength, #colorList) do
+        if countByHex[colorList[i].hex] then
+            table.insert(self.selectColorList, colorList[i])
+            self.selectCountByHex[colorList[i].hex] = countByHex[colorList[i].hex] or 1
+        end
+        i = i + 1
+    end
+end
+
 function Theme:_createColor()
-    table.sort(self.selectColorList, function(a, b)
-        return self.selectCountByHex[a.hex] > self.selectCountByHex[b.hex]
-    end)
+    table.sort(self.selectColorList, function(a, b) return a.hsv[1] > b.hsv[1] end)
     self:_findHighestContrastColor()
     if self.targetColorCount > #self.color[1] then self:_colorFillMissing() end
     self:_lightenOrDarkenPair()
@@ -113,12 +127,10 @@ end
 function Theme:_findHighestContrastColor()
     local bestColor, bestContrast = nil, 0
     for _, candidate in ipairs(self.selectColorList) do
-        if self.selectCountByHex[candidate.hex] then
-            local candidateMinDistance = self:_minDistance(candidate, 50)
-            if candidateMinDistance > bestContrast then
-                bestContrast = candidateMinDistance
-                bestColor = candidate
-            end
+        local candidateMinDistance = self:_minDistance(candidate, 10)
+        if candidateMinDistance > bestContrast then
+            bestContrast = candidateMinDistance
+            bestColor = candidate
         end
     end
     if not bestColor then return end
